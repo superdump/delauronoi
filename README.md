@@ -4,4 +4,4 @@ A library for taking a set of points in 2D and producing convex hulls, Delaunay 
 
 ## License
 
-MIT. See the [LICENSE](https://github.com/superdump/delauronoi/blob/master/LICENSE) file for details.
+MIT. See the [LICENSE](./LICENSE) file for details.

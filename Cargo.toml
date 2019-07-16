@@ -6,4 +6,8 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
+log = "0.4.7"
+
+[dev-dependencies]
 clap = "2.33.0"
+env_logger = "0.6.2"

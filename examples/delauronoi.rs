@@ -38,17 +38,8 @@ fn main() -> Result<()> {
                 .help("Window height")
                 .takes_value(true),
         )
-        .arg(
-            Arg::with_name("points")
-                .short("p")
-                .long("points")
-                .value_name("POINTS")
-                .help("Number of random points to generate")
-                .takes_value(true),
-        )
         .get_matches();
 
-    let n_vertices: usize = value_t!(app.value_of("points"), usize).unwrap_or(10);
     let width: usize = value_t!(app.value_of("width"), usize).unwrap_or(800);
     let height: usize = value_t!(app.value_of("height"), usize).unwrap_or(600);
 

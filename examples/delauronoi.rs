@@ -39,8 +39,8 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let width: usize = value_t!(app.value_of("width"), usize).unwrap_or(800);
-    let height: usize = value_t!(app.value_of("height"), usize).unwrap_or(600);
+    let width: usize = value_t!(app.value_of("width"), usize).unwrap_or(1080);
+    let height: usize = value_t!(app.value_of("height"), usize).unwrap_or(1080);
 
     Delauronoi::run(WindowSettings {
         title: env!("CARGO_PKG_NAME").to_string(),

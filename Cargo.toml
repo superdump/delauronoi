@@ -12,10 +12,18 @@ nalgebra = "0.18.0"
 
 [dev-dependencies]
 clap = "2.33.0"
-coffee = { version = "0.3.1", features = ["metal"] }
+coffee = "0.3.1"
 env_logger = "0.6.2"
 glsl-to-spirv = "0.1.7"
 rand = "0.7.0"
+
+[features]
+default = ["metal"]
+opengl = ["coffee/opengl"]
+vulkan = ["coffee/vulkan"]
+metal = ["coffee/metal"]
+dx11 = ["coffee/dx11"]
+dx12 = ["coffee/dx12"]
 
 [profile.dev]
 opt-level = 2

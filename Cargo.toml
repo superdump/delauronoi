@@ -12,7 +12,9 @@ nalgebra = "0.18.0"
 
 [dev-dependencies]
 clap = "2.33.0"
+coffee = { version = "0.3.1", features = ["metal"] }
 env_logger = "0.6.2"
+glsl-to-spirv = "0.1.7"
 rand = "0.7.0"
 
 [profile.dev]

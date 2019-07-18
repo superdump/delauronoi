@@ -7,8 +7,15 @@ use clap::{App, Arg};
 use delauronoi::*;
 use env_logger;
 use rand::Rng;
+use std::{thread, time};
 
-fn main() {
+use coffee::graphics::{
+    Color, Frame, Mesh, Shape, Window, WindowSettings,
+};
+use coffee::load::{loading_screen::ProgressBar, Join, Task};
+use coffee::{Game, Result, Timer};
+
+fn main() -> Result<()> {
     env_logger::init();
 
     let app = App::new(env!("CARGO_PKG_NAME"))
@@ -45,22 +52,70 @@ fn main() {
     let width: usize = value_t!(app.value_of("width"), usize).unwrap_or(800);
     let height: usize = value_t!(app.value_of("height"), usize).unwrap_or(600);
 
-    let vertices = generate_vertices(n_vertices, width, height);
-    print_vertices(&vertices);
+    Delauronoi::run(WindowSettings {
+        title: env!("CARGO_PKG_NAME").to_string(),
+        size: (width as u32, height as u32),
+        resizable: false,
+        fullscreen: false,
+    })
 }
 
-fn generate_vertices(n_vertices: usize, width: usize, height: usize) -> Vertex2Array {
-    let mut rng = rand::thread_rng();
-    let (w_f32, h_f32) = (width as f32, height as f32);
-    let mut vertices = v2_array_with_capacity(n_vertices);
-    for _ in 0..n_vertices {
-        vertices.push(v2(rng.gen_range(0f32, w_f32), rng.gen_range(0f32, h_f32)));
+struct Delauronoi {
+    vertices: Vertex2Array,
+}
+
+impl Delauronoi {
+    const N_VERTICES: usize = 10;
+
+    fn generate_vertices(width: f32, height: f32) -> Task<Vertex2Array> {
+        Task::new(move || {
+            let mut rng = rand::thread_rng();
+            let mut vertices = v2_array_with_capacity(Self::N_VERTICES);
+            for _ in 0..Self::N_VERTICES {
+                vertices.push(v2(rng.gen_range(0f32, width), rng.gen_range(0f32, height)));
+            }
+            vertices
+        })
     }
-    vertices
+
+    #[allow(dead_code)]
+    fn print_vertices(vertices: &Vertex2Array) {
+        for v in vertices {
+            info!("{}", v);
+        }
+    }
 }
 
-fn print_vertices(vertices: &Vec<Point2<f32>>) {
-    for v in vertices {
-        info!("{}", v);
+impl Game for Delauronoi {
+    type Input = ();
+    type LoadingScreen = ProgressBar;
+
+    fn load(window: &Window) -> Task<Delauronoi> {
+        (
+            Task::stage(
+                "Generating vertices...",
+                Self::generate_vertices(window.width(), window.height()),
+            ),
+            Task::stage(
+                "Showing off the loading screen for a bit...",
+                Task::new(|| thread::sleep(time::Duration::from_secs(2))),
+            ),
+        )
+            .join()
+            .map(|(vertices, _)| Delauronoi { vertices })
+    }
+
+    fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
+        frame.clear(Color::BLACK);
+
+        self.vertices.iter().for_each(|v| {
+            let mut mesh = Mesh::new();
+            let shape = Shape::Circle {
+                center: *v,
+                radius: 8f32,
+            };
+            mesh.fill(shape, Color::WHITE);
+            mesh.draw(&mut frame.as_target());
+        });
     }
 }

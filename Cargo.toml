@@ -1,6 +1,7 @@
 [package]
 name = "delauronoi"
 version = "0.1.0"
+description = "Delaunay triangulation of sets of points producing meshes and Voronoi diagrams"
 authors = ["Robert Swain <robert.swain@gmail.com>"]
 edition = "2018"
 license = "MIT"

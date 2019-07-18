@@ -11,10 +11,10 @@ use rand::Rng;
 fn main() {
     env_logger::init();
 
-    let app = App::new("delauronoi")
+    let app = App::new(env!("CARGO_PKG_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
-        .about("Delaunay triangulation of sets of points producing meshes and Voronoi diagrams")
+        .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
             Arg::with_name("width")
                 .short("w")

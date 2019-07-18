@@ -8,9 +8,7 @@ use delauronoi::*;
 use env_logger;
 use rand::Rng;
 
-use coffee::graphics::{
-    Color, Frame, Mesh, Shape, Window, WindowSettings,
-};
+use coffee::graphics::{Color, Frame, Mesh, Shape, Window, WindowSettings};
 use coffee::load::Task;
 use coffee::{Game, Result, Timer};
 
@@ -51,23 +49,28 @@ fn main() -> Result<()> {
 }
 
 struct Delauronoi {
-    vertices: Vertex2Array,
+    vertices: Vec<Vertex2>,
+    hull: Option<Hull>,
 }
 
 impl Delauronoi {
-    const N_VERTICES: usize = 10;
+    const N_VERTICES: usize = 50;
+    const BORDER: f32 = 20f32;
 
-    fn generate_vertices(width: f32, height: f32) -> Vertex2Array {
+    fn generate_vertices(width: f32, height: f32) -> Vec<Vertex2> {
         let mut rng = rand::thread_rng();
-        let mut vertices = vertex2_array_with_capacity(Self::N_VERTICES);
+        let mut vertices = Vec::<Vertex2>::with_capacity(Self::N_VERTICES);
         for _ in 0..Self::N_VERTICES {
-            vertices.push(v2(rng.gen_range(0f32, width), rng.gen_range(0f32, height)));
+            vertices.push(v2(
+                rng.gen_range(Self::BORDER, width - Self::BORDER),
+                rng.gen_range(Self::BORDER, height - Self::BORDER),
+            ));
         }
         vertices
     }
 
     #[allow(dead_code)]
-    fn print_vertices(vertices: &Vertex2Array) {
+    fn print_vertices(vertices: &Vec<Vertex2>) {
         for v in vertices {
             info!("{}", v.position);
         }
@@ -83,14 +86,21 @@ impl Game for Delauronoi {
         Task::new(move || {
             let vertices = Self::generate_vertices(width, height);
             Self::print_vertices(&vertices);
-            Delauronoi { vertices }
+            let hull = if let Ok(h) = quickhull(&vertices) {
+                Some(h)
+            } else {
+                None
+            };
+            Delauronoi { vertices, hull }
         })
     }
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Color::BLACK);
 
-        self.vertices.iter().for_each(|v| {
+        // Draw circles for the vertices
+        for i in 0..self.vertices.len() {
+            let v = &self.vertices[i];
             let mut mesh = Mesh::new();
             let shape = Shape::Circle {
                 center: v.position,
@@ -98,6 +108,34 @@ impl Game for Delauronoi {
             };
             mesh.fill(shape, Color::WHITE);
             mesh.draw(&mut frame.as_target());
-        });
+        }
+
+        // Draw lines around the hull
+        if let Some(hull) = &self.hull {
+            let vertices = &self.vertices;
+            hull.mesh.edges.iter().for_each(|e| {
+                let mut mesh = Mesh::new();
+                let points = line(
+                    &vertices[e.origin].position,
+                    &vertices[e.destination].position,
+                    2f32,
+                );
+                let shape = Shape::Polyline { points };
+                mesh.fill(shape, Color::WHITE);
+                mesh.draw(&mut frame.as_target());
+            });
+        }
     }
+}
+
+fn line(a: &Position, b: &Position, width: f32) -> Vec<Position> {
+    let mut v = Vec::new();
+    let ab = (b - a).normalize() * width;
+    let perp1 = Vector2::<f32>::new(ab.y, -ab.x);
+    let perp2 = Vector2::<f32>::new(-ab.y, ab.x);
+    v.push(position(a.x + perp1.x, a.y + perp1.y));
+    v.push(position(b.x + perp1.x, b.y + perp1.y));
+    v.push(position(b.x + perp2.x, b.y + perp2.y));
+    v.push(position(a.x + perp2.x, a.y + perp2.y));
+    v
 }

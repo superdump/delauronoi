@@ -59,7 +59,7 @@ impl Delauronoi {
 
     fn generate_vertices(width: f32, height: f32) -> Vertex2Array {
         let mut rng = rand::thread_rng();
-        let mut vertices = v2_array_with_capacity(Self::N_VERTICES);
+        let mut vertices = vertex2_array_with_capacity(Self::N_VERTICES);
         for _ in 0..Self::N_VERTICES {
             vertices.push(v2(rng.gen_range(0f32, width), rng.gen_range(0f32, height)));
         }
@@ -69,7 +69,7 @@ impl Delauronoi {
     #[allow(dead_code)]
     fn print_vertices(vertices: &Vertex2Array) {
         for v in vertices {
-            info!("{}", v);
+            info!("{}", v.position);
         }
     }
 }
@@ -93,7 +93,7 @@ impl Game for Delauronoi {
         self.vertices.iter().for_each(|v| {
             let mut mesh = Mesh::new();
             let shape = Shape::Circle {
-                center: *v,
+                center: v.position,
                 radius: 8f32,
             };
             mesh.fill(shape, Color::WHITE);

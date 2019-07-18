@@ -7,12 +7,11 @@ use clap::{App, Arg};
 use delauronoi::*;
 use env_logger;
 use rand::Rng;
-use std::{thread, time};
 
 use coffee::graphics::{
     Color, Frame, Mesh, Shape, Window, WindowSettings,
 };
-use coffee::load::{loading_screen::ProgressBar, Join, Task};
+use coffee::load::Task;
 use coffee::{Game, Result, Timer};
 
 fn main() -> Result<()> {
@@ -58,15 +57,13 @@ struct Delauronoi {
 impl Delauronoi {
     const N_VERTICES: usize = 10;
 
-    fn generate_vertices(width: f32, height: f32) -> Task<Vertex2Array> {
-        Task::new(move || {
-            let mut rng = rand::thread_rng();
-            let mut vertices = v2_array_with_capacity(Self::N_VERTICES);
-            for _ in 0..Self::N_VERTICES {
-                vertices.push(v2(rng.gen_range(0f32, width), rng.gen_range(0f32, height)));
-            }
-            vertices
-        })
+    fn generate_vertices(width: f32, height: f32) -> Vertex2Array {
+        let mut rng = rand::thread_rng();
+        let mut vertices = v2_array_with_capacity(Self::N_VERTICES);
+        for _ in 0..Self::N_VERTICES {
+            vertices.push(v2(rng.gen_range(0f32, width), rng.gen_range(0f32, height)));
+        }
+        vertices
     }
 
     #[allow(dead_code)]
@@ -79,21 +76,15 @@ impl Delauronoi {
 
 impl Game for Delauronoi {
     type Input = ();
-    type LoadingScreen = ProgressBar;
+    type LoadingScreen = ();
 
     fn load(window: &Window) -> Task<Delauronoi> {
-        (
-            Task::stage(
-                "Generating vertices...",
-                Self::generate_vertices(window.width(), window.height()),
-            ),
-            Task::stage(
-                "Showing off the loading screen for a bit...",
-                Task::new(|| thread::sleep(time::Duration::from_secs(2))),
-            ),
-        )
-            .join()
-            .map(|(vertices, _)| Delauronoi { vertices })
+        let (width, height) = (window.width(), window.height());
+        Task::new(move || {
+            let vertices = Self::generate_vertices(width, height);
+            Self::print_vertices(&vertices);
+            Delauronoi { vertices }
+        })
     }
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {

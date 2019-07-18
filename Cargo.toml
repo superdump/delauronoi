@@ -24,6 +24,3 @@ vulkan = ["coffee/vulkan"]
 metal = ["coffee/metal"]
 dx11 = ["coffee/dx11"]
 dx12 = ["coffee/dx12"]
-
-[profile.dev]
-opt-level = 2

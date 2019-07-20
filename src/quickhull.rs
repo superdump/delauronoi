@@ -1,6 +1,6 @@
 use crate::edge::{edge, Edge};
 use crate::hull::{hull, Hull};
-use crate::mesh::mesh;
+use crate::mesh::{mesh, Mesh};
 use crate::vertex::Vertex2;
 
 pub fn quickhull(vertices: &Vec<Vertex2>) -> Result<Hull, ()> {
@@ -19,7 +19,7 @@ pub fn quickhull(vertices: &Vec<Vertex2>) -> Result<Hull, ()> {
     assert_eq!(s_right.len() + s_left.len(), vertices.len() - 2);
     find_hull(vertices, &s_right, &e, &mut hull_vertices)?;
     find_hull(vertices, &s_left, &e_rev, &mut hull_vertices)?;
-    return hull_from_vertices(&hull_vertices);
+    return hull_from_vertices(vertices, &hull_vertices);
 }
 
 fn find_left_right(vertices: &Vec<Vertex2>) -> (usize, usize) {
@@ -105,14 +105,36 @@ fn vec_insert_after<T>(vec: &mut Vec<T>, after: usize, value: T) {
     vec[(after + 1)..].rotate_right(1);
 }
 
-fn hull_from_vertices(hull_vertices: &Vec<usize>) -> Result<Hull, ()> {
+fn hull_from_vertices(vertices: &Vec<Vertex2>, hull_vertices: &Vec<usize>) -> Result<Hull, ()> {
     if hull_vertices.len() < 2 {
         return Err(());
     }
     let mut mesh = mesh();
+    let mut e_prev = None;
     for i in 0..hull_vertices.len() {
-        let e = edge(hull_vertices[i], hull_vertices[(i + 1) % hull_vertices.len()]);
-        mesh.add_edge(e);
+        let mut e = edge(hull_vertices[i], hull_vertices[(i + 1) % hull_vertices.len()]);
+        if let Some(e_prev_i) = e_prev {
+            let mut prev = &mut mesh.edges[e_prev_i];
+            set_adjacent_edges(vertices, e_prev_i, &mut prev, i, &mut e);
+        }
+        e_prev = Some(mesh.add_edge(e));
+    }
+    let i = 0;
+    if let Some(e_prev_i) = e_prev {
+        let (a, b) = mesh.edges.split_at_mut(1);
+        let mut e = &mut a[0];
+        let mut prev = &mut b[e_prev_i - 1];
+        set_adjacent_edges(vertices, e_prev_i, &mut prev, i, &mut e);
     }
     Ok(hull(mesh))
+}
+
+fn set_adjacent_edges(vertices: &Vec<Vertex2>, e_prev_i: usize, e_prev: &mut Edge, i: usize, e: &mut Edge) {
+    if e_prev.cross(vertices, e) >= 0f32 {
+        e_prev.edge_left_ccw = Some(i);
+        e.edge_left_cw = Some(e_prev_i);
+    } else {
+        e_prev.edge_right_cw = Some(i);
+        e.edge_left_ccw = Some(e_prev_i);
+    }
 }

@@ -17,8 +17,10 @@ pub fn mesh() -> Mesh {
 }
 
 impl Mesh {
-    pub fn add_edge(&mut self, e: Edge) {
+    pub fn add_edge(&mut self, e: Edge) -> usize {
+        let index = self.edges.len();
         self.edges.push(e);
+        index
     }
 
     pub fn add_face(&mut self, f: Face) {

@@ -43,7 +43,7 @@ impl Edge {
     // intersection would occur, else None
     pub fn intersect_from_ray(&self, vertices: &Vec<Vertex2>, i: usize) -> Option<f32> {
         let p = vertices[i].position;
-        let (o, d) = (vertices[self.origin].position, vertices[self.destination].position);
+        let (o, d) = self.positions(vertices);
         let v1 = p - o;
         let v2 = d - o;
         let sign;
@@ -64,6 +64,21 @@ impl Edge {
             }
         }
         None
+    }
+
+    pub fn positions(&self, vertices: &Vec<Vertex2>) -> (Position, Position) {
+        (vertices[self.destination].position, vertices[self.origin].position)
+    }
+
+    pub fn as_vector(&self, vertices: &Vec<Vertex2>) -> Vector2<f32> {
+        let (o, d) = self.positions(vertices);
+        d - o
+    }
+
+    pub fn cross(&self, vertices: &Vec<Vertex2>, other: &Edge) -> f32 {
+        let a = self.as_vector(vertices);
+        let b = other.as_vector(vertices);
+        return cross(&a, &b);
     }
 }
 
